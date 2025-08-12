@@ -1,95 +1,58 @@
-# A2A Proxy (FastAPI, Cloud Run ready)
+# A2A Proxy
 
-Minimal proxy exposing:
-- `GET /elastic/agent.json` → `{kbnUrl}/api/chat/a2a/{agentId}.json`
-- `POST /elastic/agent` → `{kbnUrl}/api/chat/a2a/{agentId}`
+A lightweight proxy that wraps Elastic OneChat agents exposed in Kibana and makes them available for A2A (Agent-to-Agent) communication.
 
-Authentication to Kibana is done via `Authorization: ApiKey <apiKey>`.
+## What it does
 
-## Service configuration
-Configure via environment (no request header overrides):
-- `AGENT_ID`: agent id
-- `KBN_URL`: base Kibana URL, e.g. `https://kibana.example.com`
-- `API_KEY`: Kibana API key
+The proxy exposes two endpoints that forward requests to Kibana's OneChat API:
+- `GET /elastic/agent.json` → Returns agent configuration with URLs remapped to proxy endpoints
+- `POST /elastic/agent` → Forwards chat requests to the Kibana agent
 
-Optional safety allowlist via env: `ALLOWED_KBN_HOSTS=kibana.example.com,other.host`
+Authentication to Kibana is handled automatically via API key injection.
 
-## Run locally
+## Configuration
 
-Using uv:
+Set these environment variables:
+- `AGENT_ID`: The OneChat agent ID in Kibana
+- `KBN_URL`: Base Kibana URL (e.g., `https://kibana.example.com`)
+- `API_KEY`: Kibana API key for authentication
+- `PROXY_BASE_URL`: Public URL of this proxy (auto-set during deployment)
 
+## Quick Start
+
+### Local Development
 ```bash
-# from repo root
+# Install dependencies
 uv sync
-# create .env with required values or copy from .env.example
-cp .env.example .env
+
+# Set environment variables
+export AGENT_ID=your-agent-id
+export KBN_URL=https://your-kibana.com
+export API_KEY=your-api-key
+
+# Run locally
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8080
 ```
 
-Test health:
-
+### Deploy to Cloud Run
 ```bash
-curl -i http://127.0.0.1:8080/healthz
+# Run the deployment script
+./deploy.sh [PROJECT_ID] [SERVICE_NAME] [KBN_URL] [API_KEY] [AGENT_ID]
+
+# Or create a .env file and run:
+./deploy.sh
 ```
 
-Test proxy (no headers needed once .env is set):
+The deployment script:
+1. Builds and deploys the service to Cloud Run
+2. Sets required environment variables
+3. Automatically configures the `PROXY_BASE_URL` with the service's public URL
+4. Returns the service URL for use
 
-```bash
-curl -i http://127.0.0.1:8080/elastic/agent.json
-```
+## Usage
 
-Or set env defaults (Cloud Run style):
+Once deployed, your OneChat agent is available at:
+- `https://your-service-url/elastic/agent.json` - Get agent config
+- `https://your-service-url/elastic/agent` - Send chat messages
 
-```bash
-export DEFAULT_AGENT_ID=<AGENT_ID>
-export DEFAULT_KBN_URL=https://<KIBANA_HOST>
-export DEFAULT_API_KEY=<API_KEY>
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8080
-```
-
-## Container build and run
-
-```bash
-docker build -t a2a-proxy:local .
-docker run --rm -p 8080:8080 \
-  -e AGENT_ID=<AGENT_ID> \
-  -e KBN_URL=https://<KIBANA_HOST> \
-  -e API_KEY=<API_KEY> \
-  a2a-proxy:local
-```
-
-## Deploy to Cloud Run
-
-Prereqs: `gcloud` installed and configured, a Google Cloud project selected.
-
-```bash
-# Enable required services (one-time):
-gcloud services enable run.googleapis.com cloudbuild.googleapis.com
-
-# Build and push with Cloud Build
-PROJECT_ID=$(gcloud config get-value project)
-REGION=us-central1
-IMAGE="gcr.io/${PROJECT_ID}/a2a-proxy:latest"
-
-gcloud builds submit --tag "$IMAGE" .
-
-# Deploy to Cloud Run
-# Set environment variables for defaults and allowlist as needed
-gcloud run deploy a2a-proxy \
-  --image "$IMAGE" \
-  --region "$REGION" \
-  --platform managed \
-  --allow-unauthenticated \
-  --cpu 1 \
-  --memory 512Mi \
-  --max-instances 10 \
-  --port 8080 \
-  --set-env-vars AGENT_ID=<AGENT_ID>,KBN_URL=https://<KIBANA_HOST>,API_KEY=<API_KEY>,ALLOWED_KBN_HOSTS=<HOST_ALLOWLIST>
-```
-
-No manual clicks are required; everything can be done via CLI.
-
-## Notes
-- The proxy forwards most headers except hop-by-hop and `Authorization` (it injects Kibana `ApiKey`).
-- Timeouts default to 30s, configurable via `TIMEOUT_SECONDS` env.
-- Health endpoint: `GET /healthz`.
+The proxy automatically handles authentication and URL remapping, making your Kibana OneChat agent accessible for A2A integrations.

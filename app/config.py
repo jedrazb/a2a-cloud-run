@@ -28,7 +28,13 @@ class Settings:
         try:
             self.TIMEOUT_SECONDS: float = float(os.environ.get("TIMEOUT_SECONDS", "30"))
         except ValueError:
-            self.TIMEOUT_SECONDS = 30.0
+            self.TIMEOUT_SECONDS = 120.0
+
+        # Proxy base URL for URL remapping in agent.json responses
+        # Proxy base URL for URL remapping in agent.json responses
+        self.PROXY_BASE_URL: str = os.environ.get(
+            "PROXY_BASE_URL", "http://127.0.0.1:8080"
+        )
 
     @property
     def allowed_kbn_hosts(self) -> List[str]:
