@@ -49,6 +49,9 @@ The deployment script:
 3. Automatically configures the `PROXY_BASE_URL` with the service's public URL
 4. Returns the service URL for use
 
+### Note about dependencies on Cloud Run
+- **Buildpacks require `requirements.txt`**: When deploying with `--source .` (buildpacks), Google Cloud Run installs Python dependencies from `requirements.txt`. Keeping only `pyproject.toml` is not sufficient for the buildpack to install dependencies. This repo includes `requirements.txt` for that reason.
+
 ## Usage
 
 Once deployed, your OneChat agent is available at:
