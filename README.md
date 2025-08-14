@@ -16,7 +16,7 @@ Set these environment variables:
 - `AGENT_ID`: The OneChat agent ID in Kibana
 - `KBN_URL`: Base Kibana URL (e.g., `https://kibana.example.com`)
 - `API_KEY`: Kibana API key for authentication
-- `PROXY_BASE_URL`: Public URL of this proxy (auto-set during deployment)
+
 
 ## Quick Start
 

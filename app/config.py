@@ -22,7 +22,9 @@ class Settings:
 
         # HTTP client timeout seconds
         try:
-            self.TIMEOUT_SECONDS: float = float(os.environ.get("TIMEOUT_SECONDS", "30"))
+            self.TIMEOUT_SECONDS: float = float(
+                os.environ.get("TIMEOUT_SECONDS", "120")
+            )
         except ValueError:
             self.TIMEOUT_SECONDS = 120.0
 

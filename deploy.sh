@@ -11,7 +11,13 @@ if [ -f .env ]; then
     export $(cat .env | grep -v '^#' | xargs)
 fi
 
-# Check if required environment variables are set
+PROJECT_ID=${1:-${PROJECT_ID}}
+SERVICE_NAME=${2:-${SERVICE_NAME}}
+KBN_URL=${3:-$KBN_URL}
+API_KEY=${4:-$API_KEY}
+AGENT_ID=${5:-$AGENT_ID}
+
+# Check if required environment variables are set (after applying defaults and args)
 if [ -z "$PROJECT_ID" ] || [ -z "$SERVICE_NAME" ] || [ -z "$KBN_URL" ] || [ -z "$API_KEY" ] || [ -z "$AGENT_ID" ]; then
     echo "Error: Required environment variables not set."
     echo "Please either:"
@@ -29,13 +35,6 @@ if [ -z "$PROJECT_ID" ] || [ -z "$SERVICE_NAME" ] || [ -z "$KBN_URL" ] || [ -z "
     echo "AGENT_ID=my-agent-id"
     exit 1
 fi
-
-# Use command line arguments if provided (overrides .env values)
-PROJECT_ID=${1:-$PROJECT_ID}
-SERVICE_NAME=${2:-$SERVICE_NAME}
-KBN_URL=${3:-$KBN_URL}
-API_KEY=${4:-$API_KEY}
-AGENT_ID=${5:-$AGENT_ID}
 
 # The region to deploy to
 REGION="us-central1"
@@ -57,8 +56,9 @@ gcloud run deploy "$SERVICE_NAME" \
   --region "$REGION" \
   --memory "$MEMORY" \
   --cpu "$CPU" \
+  --timeout 120 \
   --no-allow-unauthenticated \
-  --set-env-vars=GOOGLE_CLOUD_PROJECT="$PROJECT_ID",GOOGLE_CLOUD_LOCATION="$REGION",KBN_URL="$KBN_URL",API_KEY="$API_KEY",AGENT_ID="$AGENT_ID"
+  --set-env-vars=GOOGLE_CLOUD_PROJECT="$PROJECT_ID",GOOGLE_CLOUD_LOCATION="$REGION",KBN_URL="$KBN_URL",API_KEY="$API_KEY",AGENT_ID="$AGENT_ID",TIMEOUT_SECONDS="120"
 
 echo "Deployment complete."
 echo "Service URL: $(gcloud run services describe $SERVICE_NAME --platform managed --region $REGION --project $PROJECT_ID --format 'value(status.url)')"
