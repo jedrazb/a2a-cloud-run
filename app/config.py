@@ -43,7 +43,7 @@ class Settings:
         self.AGENT_PROXY_PATH: str = agent_proxy_path
 
         #  Upstream Kibana A2A endpoint path
-        self.KIBANA_A2A_ENDPOINT: str = "api/chat/a2a"
+        self.KIBANA_A2A_ENDPOINT: str = "api/agent_builder/a2a"
 
 
 settings = Settings()
